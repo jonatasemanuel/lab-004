@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: attacker-pod
+  namespace: cyber-lab-004
+spec:
+  containers:
+  - name: attacker-container
+    image: lab/attacker:1.0
+    imagePullPolicy: IfNotPresent
+    command: ["sleep", "infinity"]
+  
+  dnsPolicy: "None" 
+  dnsConfig:
+    nameservers:
+      - 10.102.41.76 
+      - 10.96.0.10 
+    searches:
+      - cyber-lab-004.svc.cluster.local
+      - svc.cluster.local
+      - cluster.local
+    options:
+      - name: ndots
+        value: "5"

@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-config
+  namespace: cyber-lab-004
+data:
+  Corefile: |
+    # BLOCO 1: O Porteiro Inteligente para o nosso domínio
+    lab.local:53 {
+        log
+        errors
+        # REGRA: Se alguém perguntar por 'honeypot.lab.local'...
+        # ...reescreva a pergunta para 'honeypot-service.cyber-lab-004.svc.cluster.local'...
+        rewrite name honeypot.lab.local honeypot-service.cyber-lab-004.svc.cluster.local
+        # ...e encaminhe a pergunta reescrita para o CHEFE (o DNS do K8s).
+        forward . 10.96.0.10
+    }
+
+    # BLOCO 2: Para qualquer outra pergunta (google.com, etc)
+    .:53 {
+        log
+        errors
+        # Encaminhe para um DNS público
+        forward . 8.8.8.8 8.8.4.4
+        cache 30
+        health
+    }
+---
+# --- O Deployment: Garante que o CoreDNS esteja sempre rodando ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coredns-deployment
+  namespace: cyber-lab-004
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coredns
+  template:
+    metadata:
+      labels:
+        app: coredns
+    spec:
+      volumes:
+      - name: coredns-config-volume
+        configMap:
+          name: coredns-config
+      containers:
+      - name: coredns-container
+        image: coredns/coredns:latest
+        imagePullPolicy: IfNotPresent
+        # Dizemos ao CoreDNS para usar nosso Corefile customizado
+        args: [ "-conf", "/etc/coredns/Corefile" ]
+        ports:
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 53
+          protocol: UDP
+        # Montamos o ConfigMap na pasta onde o CoreDNS espera encontrá-lo
+        volumeMounts:
+        - name: coredns-config-volume
+          mountPath: /etc/coredns
+---
+# --- O Service: Expõe o CoreDNS para o resto do laboratório ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coredns-service
+  namespace: cyber-lab-004
+spec:
+  type: ClusterIP # Acessível apenas de dentro do cluster
+  selector:
+    app: coredns
+  ports:
+  - name: dns-tcp
+    protocol: TCP
+    port: 53
+    targetPort: 53
+  - name: dns-udp
+    protocol: UDP
+    port: 53
+    targetPort: 53
