@@ -1,0 +1,109 @@
+# --- As permissões (RBAC) continuam as mesmas, elas estavam certas ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: falco-sa
+  namespace: cyber-lab-004
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: falco-cr
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "pods", "events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "daemonsets"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: falco-crb
+subjects:
+- kind: ServiceAccount
+  name: falco-sa
+  namespace: cyber-lab-004
+roleRef:
+  kind: ClusterRole
+  name: falco-cr
+  apiGroup: rbac.authorization.k8s.io
+---
+# --- A PORRA DO DAEMONSET FINAL E CORRETO ---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: falco-daemonset
+  namespace: cyber-lab-004
+spec:
+  selector:
+    matchLabels:
+      app: falco
+  template:
+    metadata:
+      labels:
+        app: falco
+    spec:
+      serviceAccountName: falco-sa
+      tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+      volumes:
+        - name: dev-fs
+          hostPath:
+            path: /dev
+        - name: proc-fs
+          hostPath:
+            path: /proc
+        - name: boot-fs
+          hostPath:
+            path: /boot
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+        - name: usr-fs
+          hostPath:
+            path: /usr
+        - name: etc-fs
+          hostPath:
+            path: /etc
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+
+      containers:
+      - name: falco
+        image: falcosecurity/falco:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        # --- AQUI ESTÁ A PORRA DA VITÓRIA ---
+        # A gente dá ao Falco as variáveis de ambiente para ele achar o síndico
+        env:
+          - name: FALCO_K8S_API
+            value: "https://kubernetes.default.svc"
+          - name: FALCO_K8S_API_CERT_PATH
+            value: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        # --- FIM DA VITÓRIA ---
+        volumeMounts:
+          - name: dev-fs
+            mountPath: /host/dev
+          - name: proc-fs
+            mountPath: /host/proc
+            readOnly: true
+          - name: boot-fs
+            mountPath: /host/boot
+            readOnly: true
+          - name: lib-modules
+            mountPath: /host/lib/modules
+            readOnly: true
+          - name: usr-fs
+            mountPath: /host/usr
+            readOnly: true
+          - name: etc-fs
+            mountPath: /host/etc
+            readOnly: true
+          - name: docker-socket
+            mountPath: /var/run/docker.sock

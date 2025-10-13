@@ -1,0 +1,10 @@
+customRules:
+  custom-rules.yaml: |-
+    - rule: Write below etc
+      desc: An attempt to write to /etc directory
+      condition: >
+        (evt.type in (open,openat,openat2) and evt.is_open_write=true and fd.typechar='f' and fd.num>=0)
+        and fd.name startswith /etc
+      output: "ARROMBADO TENTANDO ESCREVER NO /ETC | file=%fd.name pcmdline=%proc.pcmdline container=%container.name pod=%k8s.pod.name"
+      priority: WARNING
+      tags: [filesystem, mitre_persistence]

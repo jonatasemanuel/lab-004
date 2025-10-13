@@ -1,3 +1,4 @@
+# --- O SERVICE DO HONEYPOT (SIMPLES E DIRETO) ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -9,9 +10,11 @@ spec:
   type: ClusterIP
   ports:
     - name: ssh
+      protocol: TCP
       port: 2222
       targetPort: 2222
 ---
+# --- A PORRA DO DEPLOYMENT FINAL E CORRETO ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,40 +30,18 @@ spec:
       labels:
         app: cowrie-honeypot
     spec:
+      # A CAIXA DE ENTREGA SECRETA PARA O DIÁRIO
       volumes:
-      - name: shared-suricata-logs
+      - name: cowrie-logs
         emptyDir: {}
-      - name: log-forwarder-script
-        configMap:
-          name: log-forwarder-config
-          defaultMode: 0777
 
       containers:
-      # COWRIE
+      # COWRIE (O REI NO SEU TRONO)
       - name: cowrie-container
         image: cowrie/cowrie:latest
         ports:
         - containerPort: 2222
-
-      # SURICATA
-      - name: suricata-sidecar
-        image: jasonish/suricata:latest
-        securityContext:
-          privileged: true
-        command: ["/bin/sh", "-c"]
-        args:
-          - suricata-update && suricata -i eth0 --af-packet=eth0 -l /suricata-logs
         volumeMounts:
-        - name: shared-suricata-logs
-          mountPath: /suricata-logs
-
-      # A BALSA DE AÇO
-      - name: log-forwarder-sidecar
-        image: alpine:latest
-        command: ["/scripts/forwarder.sh"]
-        volumeMounts:
-        # A CAIXA DE ENTREGA AGORA PODE SER ESCRITA E LIDA
-        - name: shared-suricata-logs
-          mountPath: /suricata-logs
-        - name: log-forwarder-script
-          mountPath: /scripts
+        # Ele vai escrever o diário dele nesta pasta compartilhada
+        - name: cowrie-logs
+          mountPath: /opt/cowrie/var/log/cowrie
