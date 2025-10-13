@@ -1,0 +1,61 @@
+# --- O Pedido de Armazenamento Persistente para o Loki ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-pvc
+  namespace: cyber-lab-004
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi # Pedimos 2GB de espaço para os logs
+---
+# --- O Service: O endereço de rede do Loki ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loki-service
+  namespace: cyber-lab-004
+spec:
+  selector:
+    app: loki
+  ports:
+    - protocol: TCP
+      port: 3100 # A porta padrão do Loki
+      targetPort: 3100
+---
+# --- O Deployment: Garante que o Loki esteja sempre rodando ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loki-deployment
+  namespace: cyber-lab-004
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loki
+  template:
+    metadata:
+      labels:
+        app: loki
+    spec:
+      volumes:
+      - name: loki-data
+        persistentVolumeClaim:
+          claimName: loki-pvc
+      containers:
+      - name: loki-container
+        # Usamos a imagem oficial do Grafana para o Loki
+        image: grafana/loki:latest
+        imagePullPolicy: IfNotPresent
+        # O comando para iniciar o Loki, apontando para sua configuração interna
+        args:
+          - "-config.file=/etc/loki/local-config.yaml"
+        ports:
+        - containerPort: 3100
+        # Montamos o "HD virtual" na pasta onde o Loki guarda os dados
+        volumeMounts:
+        - name: loki-data
+          mountPath: /loki

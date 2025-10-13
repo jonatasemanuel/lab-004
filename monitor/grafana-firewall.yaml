@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1 # <-- k8s.io, NÃO k.io
+kind: NetworkPolicy
+metadata:
+  name: grafana-ingress-policy
+  namespace: cyber-lab-004
+spec:
+  # 1. Aplique ao Grafana
+  podSelector:
+    matchLabels:
+      app: grafana
+  
+  # 2. Controle o tráfego de ENTRADA
+  policyTypes:
+    - Ingress
+
+  # 3. Regras de Entrada
+  ingress:
+    # REGRA: Permita receber tráfego de QUALQUER ENDEREÇO IP
+    - from:
+      - ipBlock:
+          # '0.0.0.0/0' é a notação de rede para "qualquer endereço IPv4 no universo"
+          cidr: 0.0.0.0/0
+      ports:
+        # Apenas na porta 3000 do Grafana
+        - protocol: TCP
+          port: 3000

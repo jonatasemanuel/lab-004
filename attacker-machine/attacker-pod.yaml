@@ -3,6 +3,8 @@ kind: Pod
 metadata:
   name: attacker-pod
   namespace: cyber-lab-004
+  labels:
+    app: attacker
 spec:
   containers:
   - name: attacker-container
