@@ -16,7 +16,7 @@ spec:
   dnsConfig:
     nameservers:
       - 10.102.41.76 
-      - 10.96.0.10 
+      - 10.100.48.204
     searches:
       - cyber-lab-004.svc.cluster.local
       - svc.cluster.local

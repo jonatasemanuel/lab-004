@@ -9,11 +9,9 @@ data:
     lab.local:53 {
         log
         errors
-        # REGRA: Se alguém perguntar por 'honeypot.lab.local'...
-        # ...reescreva a pergunta para 'honeypot-service.cyber-lab-004.svc.cluster.local'...
         rewrite name honeypot.lab.local honeypot-service.cyber-lab-004.svc.cluster.local
-        # ...e encaminhe a pergunta reescrita para o CHEFE (o DNS do K8s).
-        forward . 10.96.0.10
+        # ...e encaminhe a pergunta reescrita para o o DNS do K8s.
+        forward . 10.100.48.204
     }
 
     # BLOCO 2: Para qualquer outra pergunta (google.com, etc)

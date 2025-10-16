@@ -4,30 +4,30 @@ metadata:
   name: honeypot-policy
   namespace: cyber-lab-004
 spec:
-  # 1. Aplique esta política ao nosso honeypot
+  # 1. aplique esta política ao nosso honeypot
   podSelector:
     matchLabels:
       app: cowrie-honeypot
   
-  # 2. Esta política controla ENTRADA e SAÍDA
+  # 2. esta política controla entrada e saída
   policyTypes:
     - Ingress
     - Egress
 
-  # 3. Regras de ENTRADA (a lista de convidados, continua a mesma)
+  # 3. regras de entrada
   ingress:
     - from:
       - podSelector:
           matchLabels:
             app: attacker
 
-  # --- 4. A PORRA DA ORDEM DE SAÍDA CORRIGIDA ---
+  # --- 4. ordem de saida
   egress:
-    # REGRA A: Permita que o pod do honeypot fale com qualquer outro pod no mesmo bairro
+    # REGRA A: permita que o pod do honeypot fale com qualquer outro pod no mesmo namespace
     - to:
       - podSelector: {}
     
-    # REGRA B: Permita que o pod do honeypot fale com o DNS do Kubernetes
+    # REGRA B: permita que o pod do honeypot fale com o DNS do Kubernetes
     - to:
       - namespaceSelector:
           matchLabels:
@@ -40,13 +40,11 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-          
-    # --- REGRA C: A PORRA DA PERMISSÃO PARA A INTERNET ---
-    # Permita a saída para qualquer lugar, EXCETO para as redes internas do cluster
+    # permitindo saída para qualquer lugar, que não sejam redes internas do cluster
     - to:
       - ipBlock:
           cidr: 0.0.0.0/0
           except:
-            - 10.0.0.0/8      # Redes de Pods e Services
-            - 172.16.0.0/12   # Redes privadas
-            - 192.168.0.0/16  # Redes privadas e a do seu host
+            - 10.0.0.0/8      # redes de pods e services
+            - 172.16.0.0/12   # redes privadas
+            - 192.168.0.0/16  # redes privadas e a do host
