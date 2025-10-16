@@ -22,7 +22,7 @@ minikube profile cyber-lab-004
 echo ""
 echo ">>> [2/5] ambiente docker minikube"
 eval $(minikube -p cyber-lab-004 docker-env)
-echo ">>> Conectado. O martelo está na mão."
+echo ">>> Conectado."
 
 echo ""
 echo ">>> [3/5] k8s - namespace..."
@@ -30,7 +30,7 @@ echo ">>> [3/5] k8s - namespace..."
 kubectl create namespace cyber-lab-004 --dry-run=client -o yaml | kubectl apply -f -
 
 echo ""
-echo ">>> [4/5] buildando kk atacante"
+echo ">>> [4/5] buildando atacante"
 docker build --network=host -t lab/attacker:1.0 ./attacker-machine/
 
 echo ""
@@ -38,11 +38,13 @@ echo ">>> [5/5] k8s aplicanco manifests..."
 
 # kubectl apply -f ./manifests/
 
+kubectl apply -f ./dns/coredns.yaml
+
 kubectl apply -f ./honeypot/honeypot-firewall.yaml
 kubectl apply -f ./honeypot/cowrie.yaml
 
-kubectl apply -f ./attacker-machine/attacker-pod.yaml
 kubectl apply -f ./attacker-machine/attacker-firewall.yaml
+kubectl apply -f ./attacker-machine/attacker-pod.yaml
 
 echo ""
-echo ">>> show"
+echo ">>> Lab iniciado"

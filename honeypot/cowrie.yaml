@@ -1,4 +1,3 @@
-# --- O SERVICE DO HONEYPOT (SIMPLES E DIRETO) ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,7 +13,6 @@ spec:
       port: 2222
       targetPort: 2222
 ---
-# --- A PORRA DO DEPLOYMENT FINAL E CORRETO ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,18 +28,15 @@ spec:
       labels:
         app: cowrie-honeypot
     spec:
-      # A CAIXA DE ENTREGA SECRETA PARA O DIÁRIO
       volumes:
       - name: cowrie-logs
         emptyDir: {}
 
       containers:
-      # COWRIE (O REI NO SEU TRONO)
       - name: cowrie-container
         image: cowrie/cowrie:latest
         ports:
         - containerPort: 2222
         volumeMounts:
-        # Ele vai escrever o diário dele nesta pasta compartilhada
         - name: cowrie-logs
           mountPath: /opt/cowrie/var/log/cowrie
