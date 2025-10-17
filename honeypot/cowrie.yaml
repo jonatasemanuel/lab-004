@@ -12,10 +12,6 @@ spec:
       protocol: TCP
       port: 2222
       targetPort: 2222
-    - name: telnet
-      protocol: TCP
-      port: 2223
-      targetPort: 2223
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -32,35 +28,15 @@ spec:
       labels:
         app: cowrie-honeypot
     spec:
-      # --- VOLUMES PARA O SIDECAR ---
       volumes:
-      - name: suricata-logs
-        emptyDir: {} # O volume que o Suricata usará para logs
+      - name: cowrie-logs
+        emptyDir: {}
 
       containers:
       - name: cowrie-container
         image: cowrie/cowrie:latest
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 2222
-        - containerPort: 2223
-        # Cowrie não precisa de ConfigMap, ele roda direto.
-
-      # --- CONTÊINER DO SURICATA (SIDECAR) ---
-      - name: suricata-sidecar
-        image: jasonish/suricata:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          # Estas capabilities são CRUCIAIS para o Suricata farejar a rede
-          privileged: true 
-          capabilities:
-            add:
-              - NET_ADMIN
-              - NET_RAW
-        command: ["/bin/sh", "-c"]
-        args:
-          # Comando para atualizar as regras e iniciar o Suricata no modo af-packet
-          - suricata-update && suricata -i eth0 --af-packet=eth0
         volumeMounts:
-        - name: suricata-logs
-          mountPath: /var/log/suricata # Onde o Suricata vai escrever seus logs
+        - name: cowrie-logs
+          mountPath: /opt/cowrie/var/log/cowrie

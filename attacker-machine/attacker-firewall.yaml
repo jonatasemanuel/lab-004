@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: attacker-egress-policy
+  namespace: cyber-lab-004
+spec:
+  # 1. Aplique esta política a qualquer pod com este crachá
+  podSelector:
+    matchLabels:
+      app: attacker
+  # 2. Esta política controla o tráfego de SAÍDA
+  policyTypes:
+    - Egress
+  # 3. Regras de SAÍDA
+  egress:
+    # REGRA A: PERMITA a comunicação com qualquer pod dentro do cluster
+    - to:
+      - podSelector: {} # Um seletor vazio significa "todos os pods no namespace"
+    # REGRA B: PERMITA a comunicação com o servidor DNS do Kubernetes
+    - to:
+      - namespaceSelector: {} # Permite falar com outros namespaces
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

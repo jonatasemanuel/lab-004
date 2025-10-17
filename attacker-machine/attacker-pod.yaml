@@ -3,6 +3,8 @@ kind: Pod
 metadata:
   name: attacker-pod
   namespace: cyber-lab-004
+  labels:
+    app: attacker
 spec:
   containers:
   - name: attacker-container
@@ -13,7 +15,7 @@ spec:
   dnsPolicy: "None" 
   dnsConfig:
     nameservers:
-      - 10.102.41.76 
+      - 10.105.113.226 
       - 10.96.0.10 
     searches:
       - cyber-lab-004.svc.cluster.local

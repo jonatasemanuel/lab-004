@@ -1,0 +1,50 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: honeypot-policy
+  namespace: cyber-lab-004
+spec:
+  # 1. aplique esta política ao nosso honeypot
+  podSelector:
+    matchLabels:
+      app: cowrie-honeypot
+  
+  # 2. esta política controla entrada e saída
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # 3. regras de entrada
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: attacker
+
+  # --- 4. ordem de saida
+  egress:
+    # REGRA A: permita que o pod do honeypot fale com qualquer outro pod no mesmo namespace
+    - to:
+      - podSelector: {}
+    
+    # REGRA B: permita que o pod do honeypot fale com o DNS do Kubernetes
+    - to:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: kube-system
+        podSelector:
+          matchLabels:
+            k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # permitindo saída para qualquer lugar, que não sejam redes internas do cluster
+    - to:
+      - ipBlock:
+          cidr: 0.0.0.0/0
+          except:
+            - 10.0.0.0/8      # redes de pods e services
+            - 172.16.0.0/12   # redes privadas
+            - 192.168.0.0/16  # redes privadas e a do host

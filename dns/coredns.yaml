@@ -5,18 +5,15 @@ metadata:
   namespace: cyber-lab-004
 data:
   Corefile: |
-    # BLOCO 1: O Porteiro Inteligente para o nosso domínio
+    # dominio local
     lab.local:53 {
         log
         errors
-        # REGRA: Se alguém perguntar por 'honeypot.lab.local'...
-        # ...reescreva a pergunta para 'honeypot-service.cyber-lab-004.svc.cluster.local'...
         rewrite name honeypot.lab.local honeypot-service.cyber-lab-004.svc.cluster.local
-        # ...e encaminhe a pergunta reescrita para o CHEFE (o DNS do K8s).
         forward . 10.96.0.10
     }
 
-    # BLOCO 2: Para qualquer outra pergunta (google.com, etc)
+    # BLOCO 2: Para qualquer outra requisicao (google.com, etc)
     .:53 {
         log
         errors
