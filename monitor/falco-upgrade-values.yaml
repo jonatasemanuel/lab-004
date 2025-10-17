@@ -1,57 +1,3 @@
-<<<<<<< HEAD
-tty: true
-falco:
-  http_output:
-    enabled: true
-    url: http://falcosidekick:2801/
-falcosidekick:
-  enabled: true
-  config:
-    slack:
-      webhookUrlSecret:
-        name: "meu-cofre-do-slack"
-        key: "webhook-url"
-      minimumpriority: notice
-  webui:
-    enabled: true
-    service:
-      type: ClusterIP
-falco:
-  customRules:
-    custom-rules.yaml: |-
-      - rule: Write below etc
-        desc: An attempt to write to /etc directory
-        condition: >
-          (evt.type in (open,openat,openat2) and evt.is_open_write=true and fd.typechar='f' and fd.num>=0)
-          and fd.name startswith /etc
-        output: "MF TENTANDO ESCREVER NO /ETC | file=%fd.name pcmdline=%proc.pcmdline container=%container.name pod=%k8s.pod.name"
-        priority: WARNING
-        tags: [filesystem, mitre_persistence]
-
-      - rule: Detect Shell inside a container
-        desc: Alert if a shell such as bash is open inside a container
-        condition: container.id != host and proc.name = bash
-        output: Bash Opened (user=%user.name container=%container.id)
-        priority: WARNING
-
-      - macro: ssh_non_standard_ports_network
-        condition: (fd.sport != 22 and fd.sport != 2222)
-      - rule: Detect Cowrie SSH Access
-        desc: Detecta conexões SSH ao honeypot Cowrie
-        condition: container.image.repository contains "cowrie" and evt.type = connect and evt.dir = "<" and fd.sport = 2222
-        output: SSH connection attempt detected on Cowrie honeypot (container=%container.name, src=%fd.sip, user=%user.name)
-        priority: WARNING
-        source: syscall
-        tags: [network, mitre_initial_access, T1078]
-
-      - rule: Disallowed SSH Connection Non Standard Port
-        desc: Detecta conexões SSH outbound em portas não padrão
-        condition: outbound and proc.exe endswith ssh and fd.l4proto=tcp and ssh_non_standard_ports_network
-        output: Disallowed SSH Connection | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
-        priority: NOTICE
-        source: syscall
-        tags: [network, process, mitre_execution, T1059]
-=======
 customRules:
   custom-rules.yaml: |-
     - rule: Write below etc
@@ -81,4 +27,3 @@ customRules:
       priority: NOTICE
       source: syscall
       tags: [network, process, mitre_execution, T1059]
->>>>>>> 06cd233 (final2)
